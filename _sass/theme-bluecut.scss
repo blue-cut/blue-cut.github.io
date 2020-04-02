@@ -4,8 +4,8 @@
 
 $primary: $base02;
 $secondary: $base03;
-$text: $base1;
-$text-small: $base0;
+$text: $base2;
+$text-small: $base1;
 $text-highlight: $orange;
 $hover: $yellow;
 
@@ -23,7 +23,7 @@ h1, h2, h3, h4, h5, h6 {
   color: $text-highlight;
   margin:0 0 10px;
   font-family: 'OpenSansRegular', "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-weight: normal;
+  font-weight: bold;
 }
 
 p, ul, ol, table, pre, dl {
@@ -164,6 +164,7 @@ dt {
   width: 100%;
   position: fixed;
   background: $secondary;
+  font-weight: bold;
   border-bottom: 4px solid $text-highlight;
   //box-shadow: 0px 1px 3px rgba(0,0,0,.25);
 
@@ -175,7 +176,7 @@ dt {
 
     li {
       font-family: 'OpenSansLight', "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-weight: normal;
+      font-weight: bold;
       list-style: none;
       display: inline;
       color: $text-highlight;
@@ -240,7 +241,7 @@ section {
 
     h1 {
       font-family: 'OpenSansLight', "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-weight: normal;
+      font-weight: bold;
       font-size: 40px;
       text-align: center;
       line-height: 36px;
