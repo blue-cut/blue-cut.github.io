@@ -14,6 +14,22 @@ Where `YEAR` is a four-digit number, `MONTH` and `DAY` are both two-digit number
 
 Jekyll also offers powerful support for code snippets:
 
+
+# Some experiment
+## Some (clacked) picutre
+
+![image]({{site.baseurl}}/assets/images/matlab.jpg)
+
+## Some maths
+
+Inline: $$ P_n = f(\sum_{i=1}^n \lambda_i x_i) $$
+
+Not inline:
+
+$$ P_n = f(\sum_{i=1}^n \lambda_i x_i) $$
+
+## Some code
+
 {% highlight ruby %}
 def print_hi(name)
   puts "Hi, #{name}"
