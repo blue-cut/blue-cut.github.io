@@ -1,6 +1,6 @@
 ---
 layout: default
-title:  "(Gentle) Introduction to Quadtrees for Games"
+title:  "(Simple) Introduction to Quadtrees for Games"
 date:   2020-08-02 17:34:00 +0800
 categories: datastructures games
 ---
@@ -36,12 +36,23 @@ However, what happens when you literally have thousands of entities in your game
 
 Luckily, there are solutions to this. As in a lot of problems in computer science, the answer lies within the way of *storing* things : datastructures. If we can find a datastructure that allows us to somehow perform less detection checks, we might still save our game.
 
-One possibility is to use *region quadtrees*. Those are special kinds of trees, where each node can have 4 children nodes, each one corresponding to a region of space.
+One possibility is to use *region quadtrees*. 
 
 
-# Coding a Quadtree : an example
+# What is a Quadtree ?
+
+Quadtrees are special kinds of trees, where each node can have 4 children nodes, each one corresponding to a region of space.
+
+**INSERT SCHEMA**
+
+
+# Coding a Quadtree : an example in python
 
 *again, you can find the repository with this example at [https://gitlab.com/Aethor/pyquadflow](https://gitlab.com/Aethor/pyquadflow)*
+
+In this part, we'll build a very simple quadtree from scratch in python. There are a lot of way to optimise this code further, but our goal is simplicity here.
+
+(Also, if you are wondering, functions with a trailing underscore (like `insert_`) indicate a side effect (which means the tree will be modified by the function). It is only a personal convention that I impose to myself (but I believe PyTorch also does so).)
 
 ## Pre-requisite : rectangles
 
@@ -55,7 +66,7 @@ class Rectangle:
         self.width = width
         self.height = height
 
-    def is_colliding(self, other: Rectangle):
+    def is_colliding(self, other: Rectangle) -> bool:
         return (
             self.x < other.x + other.width
             and self.x + self.width > other.x
@@ -85,23 +96,37 @@ def is_leaf(self):
     return self.children is None
 ```
 
-The *self.max_entities_nb* field is here to have a condition on the tree splitting : When too much entities are on the current node, we will split into four children.
+The *self.max_entities_nb* field is here to have a condition on the tree splitting : When too much entities are on the current node, we will split our trees into four children.
 
 Lastly, the *self.max_depth* field prevents the tree from splitting indefinitely, which might happen when the size of the smallest region of the quadtree is smaller than a game entity.
 
+Now, we can start implementing some methods of our quadtree !
+
+
 ## Insertion
 
+As usual with trees, we can implement everything using recursion. A common pattern in trees is that we wan't to know wether we're in a leaf node or not : this is easily accomplished with our `is_leaf()` function below :
+
 ```python
-def insert_(self, rectangle: Rectangle):
-    if not self.is_leaf():
-        for child in self.children:
-            if child.region.is_colliding(rectangle):
-                child.insert_(rectangle)
-        return
+    def insert_(self, rectangle: Rectangle):
+        if not self.is_leaf():
+            for child in self.children:
+                if child.region.is_colliding(rectangle):
+                    child.insert_(rectangle)
+            return
 
-    self.entities.add(rectangle)
+        self.entities.add(rectangle)
 
-    if len(self.entities) > self.max_entities_nb and self.max_depth > 0:
+        if len(self.entities) > self.max_entities_nb and self.max_depth > 0:
+            self.split_()
+```
+
+When inserting, both cases are pretty self-explanatory :  
+* If we are not in a leaf node, we call insert_ on every child intersecting with the entity we want to insert
+* If we are in a terminal node, we already know that the given entity should be inserted : we simply add it to the node's set of entities. However, there is a catch : if the number of entities is too big in this node (see our `max_entities_nb` field !), we must split our tree in four ! This involves creating four new children, and assigning them to our `children` field. 
+
+```python
+    def split_(self):
         child_width = self.region.width / 2
         child_height = self.region.height / 2
         self.children = [
@@ -151,6 +176,8 @@ def insert_(self, rectangle: Rectangle):
 
 ## Deletion
 
+Deleting entities in a quadtree might be tricky, because we have to make sure to delete a node children when they contain less entities that `max_entities_nb` together.
+
 ```python
 def delete_(self, rectangle: Rectangle):
     if not self.is_leaf():
@@ -168,7 +195,10 @@ def delete_(self, rectangle: Rectangle):
         self.entities.remove(rectangle)
 ```
 
-## Collision
+
+## Collisions
+
+We said it in the introduction : quadtrees can help you reduce the number of collision computations. The following function determines if a specific rectangle is colliding with something in the game world :
 
 ```python
 def is_rectangle_colliding(self, rectangle: Rectange) -> bool:
@@ -194,3 +224,46 @@ def move_(self, rectangle: Rectangle, position: Tuple[float]):
     rectangle.y = position[1]
     self.insert_(rectangle)
 ```
+
+
+# Performance Test
+
+To validate that our quadtree helps reducing the number of collisions when our number of game entities is high, I created a simple demo (see *demo.py* at https://gitlab.com/Aethor/pyquadflow if you want to try it out by yourself). 
+
+**INSERT DEMO SCREENSHOT**
+
+There are two collision counters at the left of the interface :  
+* The *bruteforce* counter shows the theoritical number of collision calls when using the bruteforce function ($$ \frac{n (n - 1)}{2} $$)
+* The *quadtree* counter shows the actual number of calls of the `is_colliding()` function of the `Rectangle` class when using the quadtree
+
+
+# Going further
+
+## Barnes-Hut approximation 
+
+## Compressed Quadtrees
+
+## Compression with Quadtrees (and not Compressed Quadtrees again)
+
+## Optimising storage
+
+In our implementation, you can notice that we store game entities in leaf nodes' sets. In practice, this might be a bad idea. A Python set, in terms of storage, comes with some base fields. Consider running :
+
+```sh
+>>> import sys
+>>> sys.getsizeof(set())
+216
+```
+
+As you can see, an empty set comes with 216 bytes (!) of allocated storage. If your tree is deep, you can quickly store *a lot* of sets, which can add up to a lot of memory. Depending on your needs, a better option would be to store entities in a continuous array global for the tree, where elements are only referenced by leaf nodes using singular values.
+
+
+## Using other structures
+
+There are actually a lot of datastructures you can use for your spatial needs ! Depending on your use case, you might prefer kd-trees, R-trees, a simpler grid... 
+
+
+# References
+
+* [1] Finkel, R. A. and J. L. Bentley. Quad trees: a data structure for retrieval on composite keys. Acta Informatica. 4, pp. 1-9. 1974.
+* [2] Dinesh P. Mehta and Sartaj Sahni. Handbook Of Data Structures And Applications (Chapman & Hall/Crc Computer and Information Science Series.). Chapman & Hall/CRC. 2004.
