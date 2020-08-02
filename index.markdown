@@ -6,3 +6,5 @@ layout: default
 ---
 
 [My first post]({% post_url 2020-03-21-welcome-to-jekyll %})
+
+[Introduction to Quadtrees for Games]({% post_url 2020-08-02-introduction-to-quadtrees-for-games %})
