@@ -105,7 +105,7 @@ Now, we can start implementing some methods of our quadtree !
 
 ## Insertion
 
-As usual with trees, we can implement everything using recursion. A common pattern in trees is that we wan't to know wether we're in a leaf node or not : this is easily accomplished with our `is_leaf()` function below :
+As usual with trees, we can implement everything using recursion. A common pattern in trees is that we wan't to know wether we're in a leaf node or not (hence our `is_leaf()` function). When we are in a leaf node, we perform a terminal action, while when we're not, we launch the function recursively on the node's children. Here is our insertion function :
 
 ```python
     def insert_(self, rectangle: Rectangle):
@@ -122,7 +122,7 @@ As usual with trees, we can implement everything using recursion. A common patte
 ```
 
 When inserting, both cases are pretty self-explanatory :  
-* If we are not in a leaf node, we call insert_ on every child intersecting with the entity we want to insert
+* If we are not in a leaf node, we call insert_ on every child intersecting with the entity we want to insert. The fact that we only recursively launch the function on intersecting children means we optimize computations by ignoring irrelevant regions of space. 
 * If we are in a terminal node, we already know that the given entity should be inserted : we simply add it to the node's set of entities. However, there is a catch : if the number of entities is too big in this node (see our `max_entities_nb` field !), we must split our tree in four ! This involves creating four new children, and assigning them to our `children` field. 
 
 ```python
@@ -174,9 +174,11 @@ When inserting, both cases are pretty self-explanatory :
         self.entities = set()
 ```
 
+Note that an entity can be inserted in different regions at the same time : in fact, it is inserted in all terminal regions colliding with it.
+
 ## Deletion
 
-Deleting entities in a quadtree might be tricky, because we have to make sure to delete a node children when they contain less entities that `max_entities_nb` together.
+Deleting entities in a quadtree might be tricky, because we have to make sure to delete a node children when they contain less entities that `max_entities_nb` together. We make use of the same patterns we observed when designing `insert_()` :
 
 ```python
 def delete_(self, rectangle: Rectangle):
@@ -195,10 +197,13 @@ def delete_(self, rectangle: Rectangle):
         self.entities.remove(rectangle)
 ```
 
+Again, we have two cases :  
+* If we are not in a leaf node, we must launch recursively our function on intersecting children. After that, we must check that the number of entities in the node's children is still greater that `max_entities_nb`. If it's not the case, we must update the tree by deleting children nodes. 
+* In a leaf node, we simply remove the input entity
 
 ## Collisions
 
-We said it in the introduction : quadtrees can help you reduce the number of collision computations. The following function determines if a specific rectangle is colliding with something in the game world :
+We said it in the introduction : quadtrees can help you (among other things) reduce the number of collision computations. The following function determines if a specific rectangle is colliding with something in the game world :
 
 ```python
 def is_rectangle_colliding(self, rectangle: Rectange) -> bool:
@@ -217,6 +222,8 @@ def is_rectangle_colliding(self, rectangle: Rectange) -> bool:
 
 ## Movement
 
+There is different ways we can achieve movement in a quadtree. The main problem is that you might need to update the tree when an entity leaves or enter a new region. We can opt for a simple (probably not optimal) option, and simply remove and insert our entity again after its position changed :
+
 ```python
 def move_(self, rectangle: Rectangle, position: Tuple[float]):
     self.delete_(rectangle)
@@ -228,7 +235,10 @@ def move_(self, rectangle: Rectangle, position: Tuple[float]):
 
 # Performance Test
 
-To validate that our quadtree helps reducing the number of collisions when our number of game entities is high, I created a simple demo (see *demo.py* at https://gitlab.com/Aethor/pyquadflow if you want to try it out by yourself). 
+To validate that our quadtree helps reducing the number of collisions when our number of game entities is high, I created a simple demo (see *demo.py* at https://gitlab.com/Aethor/pyquadflow if you want to try it out by yourself). It works as follows :  
+* When left-clicking, the demo will add a rectangle to the displayed quadtree using the `insert_` method
+* At creation, rectangles are assigned a random speed vector. Each frame, rectangles will be moved according to this speed vector using our `move_()` function. Rectangle also bounces on the edge of the quadtree root region
+* Each frame, the demo will check for collisions using our `is_rectange_colliding()` function. Any rectangle colliding with another rectangle will be shown in red instead of black
 
 **INSERT DEMO SCREENSHOT**
 
@@ -240,6 +250,11 @@ There are two collision counters at the left of the interface :
 # Going further
 
 ## Barnes-Hut approximation 
+
+Here, we only showed a simple example involving collisions. However, in most physical simulations, one will usually have to compute the action of some forces on all entities. One common force is of course gravity, but gravity can be costly to compute. To compute the gravitational force applied to a single entity, one needs to refer to the mass of all other entities of the system ! Hence, gravity computation is of complexity $$ O(n^2) $$.
+
+Luckily, there exist a way to approximate gravity computation using quadtrees : the Barnes-Hut approximation **[3]**.
+
 
 ## Compressed Quadtrees
 
@@ -266,4 +281,5 @@ There are actually a lot of datastructures you can use for your spatial needs ! 
 # References
 
 * [1] Finkel, R. A. and J. L. Bentley. Quad trees: a data structure for retrieval on composite keys. Acta Informatica. 4, pp. 1-9. 1974.
-* [2] Dinesh P. Mehta and Sartaj Sahni. Handbook Of Data Structures And Applications (Chapman & Hall/Crc Computer and Information Science Series.). Chapman & Hall/CRC. 2004.
+* [2] Dinesh P. Mehta and Sartaj Sahni. Handbook Of Data Structures And Applications. Chapman & Hall/CRC. 2004.
+* [3] Barnes J. and Hut P.. A Hierarchical $$ O(N log(N)) $$ force-calculation algorithm. Nature. 234 (4) : 446-449. 1986.
