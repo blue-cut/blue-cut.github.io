@@ -255,10 +255,45 @@ Here, we only showed a simple example involving collisions. However, in most phy
 
 Luckily, there exist a way to approximate gravity computation using quadtrees : the Barnes-Hut approximation **[3]**.
 
+The idea is simple. Let's look at the classic gravity force formula between two objects :
+
+$$ F = G \frac{m_{1} m_{2}}{r^{2}} $$
+
+Where :  
+* $$ G $$ is the gravitational constant
+* $$ m_1 $$ is the mass of the first object
+* $$ m_2 $$ is the mass of the second object
+* $$ r $$ is the distance between the two objects
+
+From this formula, it is trivial to see that the further away two objects are, the lower the gravitational force between them. It naturally follows that when you are trying to compute the global gravitational force for an object in a world with a lot of objects, farther objects are less important for the precision of the simulation.
+
+To decrease the number of computations, one could simply *ignore* distant objects, keeping only a certain number of close objects involved. However, The Barnes-Hut approximation is a bit more clever. 
+
+Let's suppose we have a quadtree. Instead of ignoring distant objects, for distant quadtree nodes, we can compute a global mass for the node with the objects it contains, and treat it as a big object. Therefore, objects in the same sector only need one computation, at the cost of a bit of precision. 
+
+When objects move, the tree might need some updating however : when an object moves from one node to another, the sum of masses of both nodes should be computed again.
+
 
 ## Compressed Quadtrees
 
 ## Compression with Quadtrees (and not Compressed Quadtrees again)
+
+Quadtrees can be used for compression. To give an intuition, we will talk about a simple application on images. For the sake of simplicity, we'll only consider black and white images.
+
+At the simplest level, images are grids of pixels. If we consider a black and white image, we could for example create an image where each pixel contains a value between 0 and 255 (the reason being, it fits nicely on a byte), 0 being absolute black while 255 being absolute white.
+
+**TODO : INSERT IMAGE**
+
+Now, we can certainly take this grid and store it into a quadtree. 
+
+**TODO : INSERT IMAGE**
+
+But what does this have to do with compression ? Well, for example, we could remove leaf nodes, and set the parent nodes values to the mean of the children nodes values :
+
+**TODO : INSERT IMAGE**
+
+Of course, this is an extremely simplified and naive idea, but it is an example on using a quadtree for compression (with loss).
+
 
 ## Optimising storage
 
