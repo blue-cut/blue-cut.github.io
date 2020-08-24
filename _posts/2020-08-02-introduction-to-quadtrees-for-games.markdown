@@ -249,6 +249,19 @@ There are two collision counters at the left of the interface :
 
 # Going further
 
+## Optimising storage
+
+In our implementation, you can notice that we store game entities in leaf nodes' sets. In practice, this might be a bad idea. A Python set, in terms of storage, comes with some base fields. Consider running :
+
+```sh
+>>> import sys
+>>> sys.getsizeof(set())
+216
+```
+
+As you can see, an empty set comes with 216 bytes (!) of allocated storage. If your tree is deep, you can quickly store *a lot* of sets, which can add up to a lot of memory. Depending on your needs, a better option would be to store entities in a continuous array global for the tree, where elements are only referenced by leaf nodes using singular values.
+
+
 ## Barnes-Hut approximation 
 
 Here, we only showed a simple example involving collisions. However, in most physical simulations, one will usually have to compute the action of some forces on all entities. One common force is of course gravity, but gravity can be costly to compute. To compute the gravitational force applied to a single entity, one needs to refer to the mass of all other entities of the system ! Hence, gravity computation is of complexity $$ O(n^2) $$.
@@ -274,9 +287,7 @@ Let's suppose we have a quadtree. Instead of ignoring distant objects, for dista
 When objects move, the tree might need some updating however : when an object moves from one node to another, the sum of masses of both nodes should be computed again.
 
 
-## Compressed Quadtrees
-
-## Compression with Quadtrees (and not Compressed Quadtrees again)
+## Compression with Quadtrees 
 
 Quadtrees can be used for compression. To give an intuition, we will talk about a simple application on images. For the sake of simplicity, we'll only consider black and white images.
 
@@ -292,25 +303,12 @@ But what does this have to do with compression ? Well, for example, we could rem
 
 **TODO : INSERT IMAGE**
 
-Of course, this is an extremely simplified and naive idea, but it is an example on using a quadtree for compression (with loss).
-
-
-## Optimising storage
-
-In our implementation, you can notice that we store game entities in leaf nodes' sets. In practice, this might be a bad idea. A Python set, in terms of storage, comes with some base fields. Consider running :
-
-```sh
->>> import sys
->>> sys.getsizeof(set())
-216
-```
-
-As you can see, an empty set comes with 216 bytes (!) of allocated storage. If your tree is deep, you can quickly store *a lot* of sets, which can add up to a lot of memory. Depending on your needs, a better option would be to store entities in a continuous array global for the tree, where elements are only referenced by leaf nodes using singular values.
+Of course, this is an extremely simplified and naive idea, but it is an example on using a quadtree for compression (with loss of information).
 
 
 ## Using other structures
 
-There are actually a lot of datastructures you can use for your spatial needs ! Depending on your use case, you might prefer kd-trees, R-trees, a simpler grid... 
+There are actually a lot of datastructures you can use for your spatial needs ! Depending on your use case, you might prefer kd-trees, R-trees, VP-trees, a simpler grid... 
 
 
 # References
