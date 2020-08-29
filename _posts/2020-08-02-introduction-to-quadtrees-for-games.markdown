@@ -41,16 +41,29 @@ One possibility is to use *region quadtrees*.
 
 # What is a Quadtree ?
 
-Quadtrees are special kinds of trees, where each node can have 4 children nodes, each one corresponding to a region of space.
+Quadtrees are special kinds of trees, where each node can have 4 children nodes, each one corresponding to a region of space. We can call those regions North-West, South-West, South-East and North-East (NW, SW, SE, NE).
 
-**INSERT SCHEMA**
+![A Quadtree is a partition of space]({{site.baseurl}}/assets/images/quadtree/quadtree.svg)
+
+
+Each node can be subdivided recursively :
+
+![A Quadtree where the North-West node is subdivided again]({{site.baseurl}}/assets/images/quadtree/quadtree_subdivided.svg)
+
+
+Each terminal node will store the list of world entities present in that region. Here, we'll store entities belonging in multiples region in all nodes corresponding to those regions at the same time.
+
+![Example of entity storage using a Quadtree]({{site.baseurl}}/assets/images/quadtree/quadtree_storage.svg)
+
+
+Now, let's come back to our initial problem : collision detection. However, this time, let's use our quadtree. To detect all collision for a world entity, one only needs to check entities that are in the same regions as the original one !
 
 
 # Coding a Quadtree : an example in python
 
 *again, you can find the repository with this example at [https://gitlab.com/Aethor/pyquadflow](https://gitlab.com/Aethor/pyquadflow)*
 
-In this part, we'll build a very simple quadtree from scratch in python. There are a lot of way to optimise this code further, but our goal is simplicity here.
+In this part, we'll build a very simple quadtree from scratch in python. There are a lot of ways to optimise this code further, but our goal is simplicity here.
 
 (Also, if you are wondering, functions with a trailing underscore (like `insert_`) indicate a side effect (which means the tree will be modified by the function). It is only a personal convention that I impose to myself (but I believe PyTorch also does so).)
 
@@ -176,6 +189,7 @@ When inserting, both cases are pretty self-explanatory :
 
 Note that an entity can be inserted in different regions at the same time : in fact, it is inserted in all terminal regions colliding with it.
 
+
 ## Deletion
 
 Deleting entities in a quadtree might be tricky, because we have to make sure to delete a node children when they contain less entities that `max_entities_nb` together. We make use of the same patterns we observed when designing `insert_()` :
@@ -201,6 +215,7 @@ Again, we have two cases :
 * If we are not in a leaf node, we must launch recursively our function on intersecting children. After that, we must check that the number of entities in the node's children is still greater that `max_entities_nb`. If it's not the case, we must update the tree by deleting children nodes. 
 * In a leaf node, we simply remove the input entity
 
+
 ## Collisions
 
 We said it in the introduction : quadtrees can help you (among other things) reduce the number of collision computations. The following function determines if a specific rectangle is colliding with something in the game world :
@@ -219,6 +234,7 @@ def is_rectangle_colliding(self, rectangle: Rectange) -> bool:
             return True
     return False
 ```
+
 
 ## Movement
 
@@ -240,11 +256,18 @@ To validate that our quadtree helps reducing the number of collisions when our n
 * At creation, rectangles are assigned a random speed vector. Each frame, rectangles will be moved according to this speed vector using our `move_()` function. Rectangle also bounces on the edge of the quadtree root region
 * Each frame, the demo will check for collisions using our `is_rectange_colliding()` function. Any rectangle colliding with another rectangle will be shown in red instead of black
 
-**INSERT DEMO SCREENSHOT**
-
 There are two collision counters at the left of the interface :  
 * The *bruteforce* counter shows the theoritical number of collision calls when using the bruteforce function ($$ \frac{n (n - 1)}{2} $$)
 * The *quadtree* counter shows the actual number of calls of the `is_colliding()` function of the `Rectangle` class when using the quadtree
+
+With a small number of entities, our quadtree gives us no gain :
+
+![Demo of our Quadtree with a small number of entity (20)]({{site.baseurl}}/assets/images/quadtree/demo_few.png)
+
+
+However, as the number of entities progresses, our quadtree quickly starts to reduce the number of collision computations :
+
+![Demo of our Quadtree with more entities (100)]({{site.baseurl}}/assets/images/quadtree/demo_lots.png)
 
 
 # Going further
@@ -291,24 +314,22 @@ When objects move, the tree might need some updating however : when an object mo
 
 Quadtrees can be used for compression. To give an intuition, we will talk about a simple application on images. For the sake of simplicity, we'll only consider black and white images.
 
-At the simplest level, images are grids of pixels. If we consider a black and white image, we could for example create an image where each pixel contains a value between 0 and 255 (the reason being, it fits nicely on a byte), 0 being absolute black while 255 being absolute white.
+At the simplest level, images are grids of pixels. If we consider a black and white image, we could for example create an image where each pixel contains a value between 0 and 255 (the reason being, it fits nicely on a byte), 0 being absolute black while 255 being absolute white. 
 
-**TODO : INSERT IMAGE**
+Now, we can certainly take this grid and store it into a quadtree, by making each pixel into a leaf node.
 
-Now, we can certainly take this grid and store it into a quadtree. 
+![Example black and white image]({{site.baseurl}}/assets/images/quadtree/umi.png)
 
-**TODO : INSERT IMAGE**
+But what does this have to do with compression ? Well, for example, we could remove leaf nodes, and set the parent nodes values to the mean of the children nodes values. Depending on the level of compression we want to achieve, we could repeat this process several times :
 
-But what does this have to do with compression ? Well, for example, we could remove leaf nodes, and set the parent nodes values to the mean of the children nodes values :
-
-**TODO : INSERT IMAGE**
+![Example of compressed black and white image]({{site.baseurl}}/assets/images/quadtree/umi_pixelized.png)
 
 Of course, this is an extremely simplified and naive idea, but it is an example on using a quadtree for compression (with loss of information).
 
 
 ## Using other structures
 
-There are actually a lot of datastructures you can use for your spatial needs ! Depending on your use case, you might prefer kd-trees, R-trees, VP-trees, a simpler grid... 
+There are actually a lot of datastructures you can use for your spatial needs ! Depending on your use case, you might prefer kd-trees, R-trees, VP-trees, different types of grids... 
 
 
 # References
