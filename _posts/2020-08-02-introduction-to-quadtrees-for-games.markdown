@@ -2,7 +2,7 @@
 layout: default
 title:  "(Simple) Introduction to Quadtrees for Games"
 date:   2020-08-02 17:34:00 +0800
-categories: datastructures games
+categories: datastructures games trees
 ---
 
 This post is a (gentle) introduction to 2D region quadtrees quadtrees applied to game development. 
