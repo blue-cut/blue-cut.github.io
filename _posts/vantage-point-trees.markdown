@@ -63,4 +63,34 @@ def knn_search(self, center: np.array, k: int) -> List[KNNSearchResult]:
 		return
 		
 	# recursion
+	dist_to_vpoint = np.linalg.norm(self.vpoint - center)
+	
+	# we are inside the circle : search in left tree
+	if dist_to_vpoint <= threshold:
+		inside_results = self.lchild.knn_search(center, k)
+		
+		# points left to search
+		dist_to_outer_edge = threshold - dist_to_vpoint
+		left_to_search_nb = len(
+			[_ for result in inside_results if result.dist > dist_to_outer_edge]
+		)
+		if left_to_search_nb == 0:
+			return inside_results
+		outside_results = self.rchild.knn_search(center, left_to_search_nb)
+		# merge results
+		return sorted(inside_results + outside_results)[:k]
+
+	# we are outside the circle : search in right tree
+	else:
+		outside_results = self.rchild.knn_search(center, k)
+		
+		# pointesleft to searcg
+		dist_to_outer_edge = dist_to_vpoint - threshold
+		left_to_search_nb = len(
+			[_ for result in outside_results if result.dist > dist_to_outer_edge]
+		)
+		if left_to_search_nb == 0:
+			return outside_results
+		inside_results = self.lchild.knn_search(center, left_to_search_nb)
+		return sorted(outside_results + inside_results)[:k]
 ```
