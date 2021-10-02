@@ -21,8 +21,8 @@
 title: Blue Cut
 email: your-email@example.com
 description: >- # this means to ignore newlines until "baseurl:"
-  A blog about computer science and probably other stuffs someday.
-  Someone needs to put the other stuffs in the description though,
+  A blog about computer science and probably other stuff someday.
+  Someone needs to put the other stuff in the description though,
   but it appears that we might be lazy people.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://blue-cut.github.io" # the base hostname & protocol for your site, e.g. http://example.com
