@@ -173,18 +173,18 @@ Deleting entities in a quadtree might be tricky, because we have to make sure to
 
 ```python
 def delete_(self, rectangle: Rectangle):
-        if self.is_leaf():
-            if rectangle in self.entities:
-                self.entities.remove(rectangle)
-            return
+    if self.is_leaf():
+        if rectangle in self.entities:
+            self.entities.remove(rectangle)
+        return
 
-        for child in self.children:
-            if child.region.is_colliding(rectangle):
-                child.delete_(rectangle)
-        nested_entities_nb = sum([len(child.get_entities()) for child in self.children])
-        if nested_entities_nb <= self.max_entities_nb:
-            self.entities = self.get_entities()
-            self.children = None
+    for child in self.children:
+        if child.region.is_colliding(rectangle):
+            child.delete_(rectangle)
+    nested_entities_nb = sum([len(child.get_entities()) for child in self.children])
+    if nested_entities_nb <= self.max_entities_nb:
+        self.entities = self.get_entities()
+        self.children = None
 ```
 
 Again, we have two cases :  
@@ -198,16 +198,16 @@ We said it in the introduction : quadtrees can help you (among other things) red
 
 ```python
 def is_rectangle_colliding(self, rectangle: Rectange) -> bool:
-        if self.is_leaf():
-            for entity in self.entities:
-                if not entity is rectangle and entity.is_colliding(rectangle):
-                    return True
-            return False
-
-        for child in self.children:
-            if child.region.is_colliding(rectangle) and child.is_rectangle_colliding(rectangle):
+    if self.is_leaf():
+        for entity in self.entities:
+            if not entity is rectangle and entity.is_colliding(rectangle):
                 return True
         return False
+
+    for child in self.children:
+        if child.region.is_colliding(rectangle) and child.is_rectangle_colliding(rectangle):
+            return True
+    return False
 ```
 
 
