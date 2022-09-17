@@ -19,7 +19,7 @@ prerequisites :
 
 # Why Quadtrees ?
 
-Let's say you are creating a game. A lot of games rely on some sort of physical engine : you probably wan't your characters to run, fly, dance or shoot lasers according to a set of rules.
+Let's say you are creating a game. A lot of games rely on some sort of physical engine : you probably wan't your characters to run, dance or shoot lasers according to a set of rules.
 
 A very common task is collision detection : given the set of all entities in a game world, which entities are colliding together ? Usually, bounding boxes are attached to entities, and those are used to determine collisions. A simple bruteforce algorithm might be to check, for each possible pair of bounding boxes, which ones are actually colliding.
 
@@ -121,17 +121,16 @@ Now, we can start implementing some methods of our quadtree !
 As usual with trees, we can implement everything using recursion. A common pattern in trees is that we wan't to know wether we're in a leaf node or not (hence our `is_leaf()` function). When we are in a leaf node, we perform a terminal action, while when we're not, we launch the function recursively on the node's children. Here is our insertion function :
 
 ```python
-    def insert_(self, rectangle: Rectangle):
-        if not self.is_leaf():
-            for child in self.children:
-                if child.region.is_colliding(rectangle):
-                    child.insert_(rectangle)
-            return
-
+def insert_(self, rectangle: Rectangle):
+    if self.is_leaf():
         self.entities.add(rectangle)
-
         if len(self.entities) > self.max_entities_nb and self.max_depth > 0:
             self.split_()
+        return
+
+    for child in self.children:
+        if child.region.is_colliding(rectangle):
+            child.insert_(rectangle)
 ```
 
 When inserting, both cases are pretty self-explanatory :  
@@ -139,52 +138,30 @@ When inserting, both cases are pretty self-explanatory :
 * If we are in a terminal node, we already know that the given entity should be inserted : we simply add it to the node's set of entities. However, there is a catch : if the number of entities is too big in this node (see our `max_entities_nb` field !), we must split our tree in four ! This involves creating four new children, and assigning them to our `children` field. 
 
 ```python
-    def split_(self):
-        child_width = self.region.width / 2
-        child_height = self.region.height / 2
-        self.children = [
-            Quadtree(
-                Rectangle(self.region.x, self.region.y, child_width, child_height),
-                self.max_entities_nb,
-                self.max_depth - 1,
-            ),
-            Quadtree(
-                Rectangle(
-                    self.region.x,
-                    self.region.y + child_height,
-                    child_width,
-                    child_height,
-                ),
-                self.max_entities_nb,
-                self.max_depth - 1,
-            ),
-            Quadtree(
-                Rectangle(
-                    self.region.x + child_width,
-                    self.region.y + child_height,
-                    child_width,
-                    child_height,
-                ),
-                self.max_entities_nb,
-                self.max_depth - 1,
-            ),
-            Quadtree(
-                Rectangle(
-                    self.region.x + child_width,
-                    self.region.y,
-                    child_width,
-                    child_height,
-                ),
-                self.max_entities_nb,
-                self.max_depth - 1,
-            ),
-        ]
+def split_(self):
+    child_width = self.region.width / 2
+    child_height = self.region.height / 2
 
-        for entity in self.entities:
-            for child in self.children:
-                if child.region.is_colliding(entity):
-                    child.insert_(entity)
-        self.entities = set()
+    possible_positions = [
+        (self.region.x, self.region.y),
+        (self.region.x, self.region.y + child_height),
+        (self.region.x + child_width, self.region.y + child_height),
+        (self.region.x + child_width, self.region.y),
+    ]
+    self.children = [
+        Quadtree(
+            Rectangle(x, y, child_width, child_height),
+            self.max_entities_nb,
+            self.max_depth - 1,
+        )
+        for x, y in possible_positions
+    ]
+
+    for entity in self.entities:
+        for child in self.children:
+            if child.region.is_colliding(entity):
+                child.insert_(entity)
+    self.entities = set()
 ```
 
 Note that an entity can be inserted in different regions at the same time : in fact, it is inserted in all terminal regions colliding with it.
@@ -196,19 +173,18 @@ Deleting entities in a quadtree might be tricky, because we have to make sure to
 
 ```python
 def delete_(self, rectangle: Rectangle):
-    if not self.is_leaf():
+        if self.is_leaf():
+            if rectangle in self.entities:
+                self.entities.remove(rectangle)
+            return
+
         for child in self.children:
             if child.region.is_colliding(rectangle):
                 child.delete_(rectangle)
-        if (
-            sum([len(child.get_entities()) for child in self.children])
-            <= self.max_entities_nb
-        ):
+        nested_entities_nb = sum([len(child.get_entities()) for child in self.children])
+        if nested_entities_nb <= self.max_entities_nb:
             self.entities = self.get_entities()
             self.children = None
-        return
-    if rectangle in self.entities:
-        self.entities.remove(rectangle)
 ```
 
 Again, we have two cases :  
@@ -222,17 +198,16 @@ We said it in the introduction : quadtrees can help you (among other things) red
 
 ```python
 def is_rectangle_colliding(self, rectangle: Rectange) -> bool:
-    if not self.is_leaf():
+        if self.is_leaf():
+            for entity in self.entities:
+                if not entity is rectangle and entity.is_colliding(rectangle):
+                    return True
+            return False
+
         for child in self.children:
-            if child.region.is_colliding(
-                rectangle
-            ) and child.is_rectangle_colliding(rectangle):
+            if child.region.is_colliding(rectangle) and child.is_rectangle_colliding(rectangle):
                 return True
         return False
-    for entity in self.entities:
-        if not entity is rectangle and entity.is_colliding(rectangle):
-            return True
-    return False
 ```
 
 
@@ -312,7 +287,7 @@ When objects move, the tree might need some updating however : when an object mo
 
 ## Compression with Quadtrees 
 
-Quadtrees can be used for compression. To give an intuition, we will talk about a simple application on images. For the sake of simplicity, we'll only consider black and white images.
+Quadtrees could be used for compression. To give an intuition, we will talk about a simple application on images. For the sake of simplicity, we'll only consider black and white images.
 
 At the simplest level, images are grids of pixels. If we consider a black and white image, we could for example create an image where each pixel contains a value between 0 and 255 (the reason being, it fits nicely on a byte), 0 being absolute black while 255 being absolute white. 
 
