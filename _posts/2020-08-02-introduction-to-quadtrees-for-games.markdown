@@ -1,6 +1,7 @@
 ---
 layout: default
 title:  "(Simple) Introduction to Quadtrees for Games"
+author: Aethor
 date:   2020-08-02 17:34:00 +0800
 categories: datastructures games
 ---

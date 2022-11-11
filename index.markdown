@@ -6,3 +6,5 @@ layout: default
 ---
 
 [Introduction to Quadtrees for Games]({% post_url 2020-08-02-introduction-to-quadtrees-for-games %})
+
+[A 2d Beacon Positioning System]({% post_url 2022-10-28-2d-beacon-positionning %})

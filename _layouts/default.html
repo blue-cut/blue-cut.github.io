@@ -40,7 +40,11 @@
         <h1>{{ site.title | default: site.github.repository_name }}</h1>
         <p>{{ site.description | default: site.github.project_tagline }}</p>
         <hr>
-        <span class="credits left">Emacs friendly</span>
+	{% if page.author %}
+	<span class="credits left">Written by {{ page.author }}</span>
+	{% else %}
+	<span class="credits left">Emacs friendly</span>
+	{% endif %}
         <span class="credits right">Hosted on GitHub Pages &mdash; Based on a theme by <a
             href="https://twitter.com/mattgraham">mattgraham</a></span>
       </div>
