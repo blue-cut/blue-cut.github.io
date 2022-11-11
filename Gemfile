@@ -28,3 +28,6 @@ end
 # Performance-booster for watching directories on Windows
 gem "wdm", "~> 0.1.1", :install_if => Gem.win_platform?
 
+# plz help
+gem 'http_parser.rb', git: "https://github.com/tmm1/http_parser.rb.git"
+gem "webrick", "~> 1.7"
